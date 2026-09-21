@@ -248,20 +248,41 @@ Delete the `return null;` line, leave the cursor on the blank line inside the br
 
 Press `Alt+]` / `Alt+[` (`Option+]` / `Option+[` on macOS) to cycle alternatives **before** accepting — showing that there are several candidates is the teaching moment.
 
-Verify it live. Restart the server, then:
+Verify it live. Restart the server, then run all three checks. **The third one is supposed to stay unsummarized** — that's the guard rail:
 
 ```bash
+# 1. The headline case - MUST summarize
 curl -s -G http://localhost:3000/explain --data-urlencode "expression=*/15 * * * *"
 ```
-
-A correct implementation reports `"Every 15 minutes"` instead of `"96 times a day"`. Also check that it degrades gracefully — irregular values must still fall through to the old listing behavior:
+```
+"description": "Every 15 minutes every day"
+```
 
 ```bash
+# 2. Partial-hour window - SHOULD summarize
+curl -s -G http://localhost:3000/explain --data-urlencode "expression=0-30/10 * * * *"
+```
+```
+"description": "Every 10 minutes from :00 to :30 every day"
+```
+
+```bash
+# 3. Irregular gaps - MUST NOT summarize
 curl -s -G http://localhost:3000/explain --data-urlencode "expression=0,7,30 * * * *"
 ```
 ```
-72 times a day every day
+"description": "72 times a day every day"
 ```
+
+| Check | Expected | Why |
+|---|---|---|
+| `*/15 * * * *` | Every 15 minutes | Evenly spaced, wraps the hour |
+| `0-30/10 * * * *` | Every 10 minutes from :00 to :30 | Evenly spaced, partial window |
+| `0,7,30 * * * *` | **72 times a day** | Gaps are 7 and 23 — uneven, so it correctly refuses to summarize |
+
+> **Check 3 passing means the output does *not* change.** "72 times a day every day" is the success condition, not a bug. If Copilot's implementation summarized this one too — say, "Every 7 minutes" — that would be the failure, and a great thing to catch on screen. Say so out loud: *"The interesting result here is the one that stayed the same. Copilot wrote a guard it wasn't explicitly told to write, and we just verified it."*
+
+Check 2 is the one most likely to vary. Simpler suggestions return `"Every 10 minutes"` without naming the window. That's acceptable — only checks 1 and 3 are pass/fail.
 
 > **Why this spot works:** ghost text predicts *what comes next*. An empty function body with a documented contract is the strongest possible signal that code belongs there. A comment wedged above existing working code is the weakest — Copilot reads the complete code below it and correctly concludes nothing is missing. If completions ever look "broken" in a demo, it's almost always the cursor position, not the extension.
 
@@ -290,13 +311,13 @@ function describeMinuteStep(minutes) {
 
 Verified output with this implementation:
 
-| Expression | Description |
-|---|---|
-| `*/15 * * * *` | Every 15 minutes every day |
-| `*/5 * * * *` | Every 5 minutes every day |
-| `0-30/10 * * * *` | Every 10 minutes from :00 to :30 every day |
-| `0,7,30 * * * *` | 72 times a day every day *(uneven, falls through)* |
-| `*/15 9 * * *` | At 9:00 AM, 9:15 AM, 9:30 AM, and 9:45 AM every day *(not hourly, falls through)* |
+| Expression | Description | Pass condition |
+|---|---|---|
+| `*/15 * * * *` | Every 15 minutes every day | must summarize |
+| `*/5 * * * *` | Every 5 minutes every day | must summarize |
+| `0-30/10 * * * *` | Every 10 minutes from :00 to :30 every day | may vary |
+| `0,7,30 * * * *` | 72 times a day every day | must **not** summarize |
+| `*/15 9 * * *` | At 9:00 AM, 9:15 AM, 9:30 AM, and 9:45 AM every day | must **not** summarize |
 
 Copilot's suggestion will differ in detail. Simpler variants that skip the partial-hour window and always return `Every N minutes` are also acceptable — every plausible variant gets the headline `*/15` case right. Judge it on the table above, not on matching this text.
 
@@ -546,6 +567,7 @@ Exit code `0` means ready. Exit code `1` means it drifted — the output names e
 | Attendee sees no ghost text | Not signed in, or extension disabled | Check the Copilot status icon; have them pair up rather than debug live |
 | Ghost text appears nowhere in the completions demo | Cursor is somewhere the code is already complete | Put it inside the empty `describeMinuteStep` body; see Surface 2a. Fall back to inline chat `implement this` |
 | Completion returns "Every 1 hours" or another wrong unit | A stale checkout — the old stub also received an `hours` array | `git pull`; the helper now takes only `minutes` |
+| `0,7,30 * * * *` still says "72 times a day" after the fix | Nothing — that's the expected result | Uneven gaps must not be summarized; it's the guard-rail check, see Surface 2a |
 
 ### Cross-platform command notes
 
