@@ -33,7 +33,7 @@ Six exercises, ramping in difficulty. Each maps to a GitHub issue.
 | **A** | *Bug: noon and midnight display as 0:00 PM and 0:00 AM* | `src/humanize.js` → `formatClock` | `hour % 12` with no `|| 12` fallback | `0 12 * * *` → "At **0:00 PM** every day" |
 | **B** | *Bug: weekly jobs written as 0 12 \* \* 7 are rejected* | `src/parser.js` → `resolveAtom` | day-of-week `7` never normalized to `0` | `0 12 * * 7` → **HTTP 400** |
 | **C** | *Bug: job with both a day-of-month and a day-of-week almost never fires* | `src/schedule.js` → `matchesDate` | ANDs day-of-month and day-of-week; POSIX cron **ORs** them when both are restricted | `0 3 1 * MON` → next run over a year out |
-| **D** | *Enhancement: describe step syntax like \*/15 as every 15 minutes* | `src/humanize.js` → `describeTime` | step syntax expanded, never summarized (see the `TODO`) | `*/15 * * * *` → "96 times a day" |
+| **D** | *Enhancement: describe step syntax like \*/15 as every 15 minutes* | `src/humanize.js` → `describeStep` | the helper is an unimplemented stub that returns `null` | `*/15 * * * *` → "96 times a day" |
 | **E** | *Onboarding: no README, new devs can't run the service* | repo root | no README exists | new joiner can't run the service |
 | **F** | *Feature: POST /collisions to find jobs that fire at the same minute* | `src/` | no collisions module at all | `POST /collisions` → 404 |
 
@@ -236,14 +236,81 @@ Open the folder. Three quick hits — don't let any one run long.
 
 ### a) Completions — defect D
 
-Open `src/humanize.js` and find the `TODO` inside `describeTime`. Type this comment directly beneath it:
+Open `src/humanize.js` and find the `describeStep` function. It has a full JSDoc contract and an empty body:
 
 ```js
-// Describe step patterns: */15 -> "Every 15 minutes",
-// 0-30/10 -> "Every 10 minutes from :00 to :30"
+function describeStep(minutes, hours) {
+  return null;
+}
 ```
 
-Let ghost text propose the implementation. Press `Alt+]` / `Alt+[` to cycle alternatives **before** accepting — showing that there are multiple candidates is the teaching moment.
+Delete the `return null;` line, leave the cursor on the blank line inside the braces, and wait. Ghost text should propose an implementation within a second or two.
+
+Press `Alt+]` / `Alt+[` (`Option+]` / `Option+[` on macOS) to cycle alternatives **before** accepting — showing that there are several candidates is the teaching moment.
+
+Verify it live. Restart the server, then:
+
+```bash
+curl -s -G http://localhost:3000/explain --data-urlencode "expression=*/15 * * * *"
+```
+
+A correct implementation reports `"Every 15 minutes"` instead of `"96 times a day"`. Also check that it degrades gracefully — irregular values must still fall through to the old listing behavior:
+
+```bash
+curl -s -G http://localhost:3000/explain --data-urlencode "expression=0,7,30 * * * *"
+```
+
+> **Why this spot works:** ghost text predicts *what comes next*. An empty function body with a documented contract is the strongest possible signal that code belongs there. A comment wedged above existing working code is the weakest — Copilot reads the complete code below it and correctly concludes nothing is missing. If completions ever look "broken" in a demo, it's almost always the cursor position, not the extension.
+
+<details>
+<summary><strong>Reference solution</strong> — what a good suggestion looks like</summary>
+
+```js
+function describeStep(minutes, hours) {
+  if (minutes.length < 2 || hours.length !== 24) {
+    return null;
+  }
+
+  const gap = minutes[1] - minutes[0];
+  const evenlySpaced = minutes.every((value, index) => index === 0 || value - minutes[index - 1] === gap);
+  if (!evenlySpaced) {
+    return null;
+  }
+
+  const last = minutes[minutes.length - 1];
+  if (minutes[0] === 0 && last + gap >= 60) {
+    return `Every ${gap} minutes`;
+  }
+
+  const pad = (n) => String(n).padStart(2, '0');
+  return `Every ${gap} minutes from :${pad(minutes[0])} to :${pad(last)}`;
+}
+```
+
+Verified output with this implementation:
+
+| Expression | Description |
+|---|---|
+| `*/15 * * * *` | Every 15 minutes every day |
+| `*/5 * * * *` | Every 5 minutes every day |
+| `0-30/10 * * * *` | Every 10 minutes from :00 to :30 every day |
+| `0,7,30 * * * *` | 72 times a day every day *(correctly falls through)* |
+
+Copilot's suggestion will differ in detail. That's fine — judge it on the table above, not on matching this text.
+
+</details>
+
+**If ghost text still doesn't appear:**
+
+| Check | Fix |
+|---|---|
+| Copilot status icon in the status bar | If it shows a slash or error, click it — usually a sign-in prompt |
+| Completions disabled for this language | Click the icon → **Enable completions for javascript** |
+| `"editor.inlineSuggest.enabled"` | Must be `true` in settings |
+| Another extension bound to `Tab` | Try `Ctrl+→` to accept word-by-word instead |
+| Nothing at all after ~3 seconds | Type a few characters of a plausible first line, such as `if (minutes.length`, to prime it |
+
+**Guaranteed fallback — never debug live:** select the whole `describeStep` function and use inline chat (`Ctrl+I` / `Cmd+I`) with `implement this`. It uses the same model, produces the same result, and is not dependent on ghost-text timing. Switch to this the moment the room is waiting.
 
 ### b) `/fix` — defect A
 
@@ -475,6 +542,7 @@ Exit code `0` means ready. Exit code `1` means it drifted — the output names e
 | An issue referenced in the guide doesn't exist | Issues were deleted, or this is a fresh fork | `npm run demo:issues` — seeds from `workshop/issues/` |
 | Issue numbers don't match a previous run | Issues were reseeded | Expected. Use `npm run demo:issues:list` for the current mapping; never paste `#N` into a prompt |
 | Attendee sees no ghost text | Not signed in, or extension disabled | Check the Copilot status icon; have them pair up rather than debug live |
+| Ghost text appears nowhere in the completions demo | Cursor is somewhere the code is already complete | Put it inside the empty `describeStep` body; see Surface 2a. Fall back to inline chat `implement this` |
 
 ### Cross-platform command notes
 

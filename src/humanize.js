@@ -36,6 +36,24 @@ function formatClock(hour, minute) {
   return `${displayHour}:${String(minute).padStart(2, '0')} ${suffix}`;
 }
 
+/**
+ * Describe an evenly-spaced schedule in summary form.
+ *
+ * Cron step syntax produces evenly-spaced values: a minute field of `*` with a
+ * step of 15 expands to 0, 15, 30, 45. Rather than listing every resulting time,
+ * collapse it back into a phrase like "Every 15 minutes".
+ *
+ * Returns null when the values are not evenly spaced, in which case the caller
+ * falls back to listing each individual time.
+ *
+ * @param {number[]} minutes sorted minute values the expression matches
+ * @param {number[]} hours sorted hour values the expression matches
+ * @returns {string|null} a phrase such as "Every 15 minutes", or null
+ */
+function describeStep(minutes, hours) {
+  return null;
+}
+
 function describeTime(parsed) {
   const minutes = sorted(parsed.fields.minute);
   const hours = sorted(parsed.fields.hour);
@@ -54,7 +72,11 @@ function describeTime(parsed) {
     return `Every hour at minute ${minutes[0]}`;
   }
 
-  // TODO: describe step patterns like */15 as "every 15 minutes" instead of listing each value.
+  const stepDescription = describeStep(minutes, hours);
+  if (stepDescription) {
+    return stepDescription;
+  }
+
   const times = [];
   for (const hour of hours) {
     for (const minute of minutes) {
