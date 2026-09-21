@@ -22,6 +22,10 @@ const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const BASE_TAG = 'demo-start';
 const PROTECTED_BRANCHES = new Set(['main', 'master']);
 
+// Facilitator materials. Untracked files here survive the reset, so slide decks,
+// speaker notes, and handouts are never destroyed between workshop runs.
+const PROTECTED_PATHS = ['docs/'];
+
 const args = new Set(process.argv.slice(2));
 const includeRemote = args.has('--remote');
 const skipPrompt = args.has('--yes') || args.has('-y');
@@ -61,6 +65,38 @@ async function confirm() {
   return answer.trim().toLowerCase() === 'y';
 }
 
+/**
+ * Warn when committed work sits ahead of the reset target.
+ *
+ * Reset is a hard reset to the pristine tag, so anything committed after the
+ * tag - new slides, extra docs, tooling fixes - is reverted. That is correct for
+ * exercise code and wrong for workshop materials, so name the files instead of
+ * silently discarding them.
+ */
+function warnIfTagIsStale(target) {
+  if (!target) return;
+
+  const ahead = git(['rev-list', '--count', `${target}..HEAD`], { allowFailure: true });
+  if (!ahead || ahead === '0') return;
+
+  const changed = (git(['diff', '--name-only', target, 'HEAD'], { allowFailure: true }) || '')
+    .split('\n')
+    .map((f) => f.trim())
+    .filter(Boolean);
+
+  console.log(`\n  !  HEAD is ${ahead} commit(s) ahead of "${target}".`);
+  console.log('     Resetting will revert these files to their tagged state:');
+  for (const file of changed.slice(0, 15)) {
+    const protectedPath = PROTECTED_PATHS.some((p) => file.startsWith(p));
+    console.log(`       ${file}${protectedPath ? '   <-- workshop material' : ''}`);
+  }
+  if (changed.length > 15) {
+    console.log(`       ... and ${changed.length - 15} more`);
+  }
+  console.log('     If this work should be part of the pristine state, cancel and run:');
+  console.log('       npm run demo:retag\n');
+}
+
 function resetLocal() {
   console.log('\nResetting local repository');
 
@@ -74,6 +110,8 @@ function resetLocal() {
   const hasTag = git(['rev-parse', '--verify', `refs/tags/${BASE_TAG}`], { allowFailure: true });
   const target = hasTag ? BASE_TAG : 'origin/main';
   step(`reset target: ${target}`);
+
+  warnIfTagIsStale(hasTag ? target : null);
 
   git(['checkout', '--force', 'main']);
   git(['reset', '--hard', target]);
@@ -89,8 +127,8 @@ function resetLocal() {
     step(`deleted local branch ${branch}`);
   }
 
-  git(['clean', '-fd']);
-  step('removed untracked files');
+  git(['clean', '-fd', ...PROTECTED_PATHS.map((p) => `--exclude=${p}`)]);
+  step(`removed untracked files (kept ${PROTECTED_PATHS.join(', ')})`);
 
   if (!existsSync(join(repoRoot, 'node_modules'))) {
     step('node_modules missing, installing dependencies');

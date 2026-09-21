@@ -495,9 +495,36 @@ npm run demo:reset
 This will:
 1. Fetch `origin` and reset `main` to the **`demo-start`** tag (the pristine commit).
 2. Delete every local branch except `main`.
-3. Remove untracked files — `node_modules` survives, so the next run starts fast.
+3. Remove untracked files — `node_modules` and everything under `docs/` survive.
 4. Reinstall dependencies if they're missing.
 5. Re-run `demo:verify` and fail loudly if anything is still off.
+
+### ⚠️ If you add workshop material, move the tag
+
+**This is the one way to lose work.** `demo:reset` is a hard reset to `demo-start`, so *anything committed after the tag is reverted* — including new slides, docs, or tooling. Adding a deck and then resetting would delete it.
+
+Two protections:
+
+- **Untracked files under `docs/` survive the reset.** Drop a deck, speaker notes, or a handout there and reset freely. `demo:verify` ignores them too.
+- **Committed material needs the tag moved.** After committing anything that should be part of the pristine state:
+
+```bash
+npm run demo:retag
+```
+
+That runs the pre-flight first (refusing to tag a commit where the planted defects are already fixed), moves `demo-start` to the current commit, and pushes it.
+
+`demo:reset` also warns before it acts:
+
+```
+  !  HEAD is 2 commit(s) ahead of "demo-start".
+     Resetting will revert these files to their tagged state:
+       docs/cronwise-intro.html   <-- workshop material
+     If this work should be part of the pristine state, cancel and run:
+       npm run demo:retag
+```
+
+**Rule of thumb:** exercise code lives *before* the tag; workshop material must be *at or before* the tag. If you commit to `main`, retag.
 
 ### Local + GitHub
 

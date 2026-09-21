@@ -114,7 +114,14 @@ async function main() {
   record('E', 'docs: README.md does not exist', !readmeExists, readmeExists ? 'README.md present' : 'absent');
 
   // Repository hygiene - a dirty tree means a previous run was not reset.
-  const status = git('status --porcelain');
+  // Untracked files under docs/ are facilitator materials (slides, notes) that
+  // demo:reset deliberately preserves, so they must not count as drift here.
+  const status = git('status --porcelain')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .filter((line) => !/^\?\?\s+docs\//.test(line))
+    .join('\n');
   record('GIT', 'git: working tree is clean', status === '', status || 'clean');
 
   const branch = git('rev-parse --abbrev-ref HEAD');

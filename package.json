@@ -15,7 +15,8 @@
     "demo:issues": "node scripts/seed-issues.mjs",
     "demo:issues:list": "node scripts/seed-issues.mjs --list",
     "demo:reset": "node scripts/reset-demo.mjs",
-    "demo:reset:all": "node scripts/reset-demo.mjs --remote"
+    "demo:reset:all": "node scripts/reset-demo.mjs --remote",
+    "demo:retag": "node scripts/retag-demo.mjs"
   },
   "dependencies": {
     "express": "^4.19.2"
