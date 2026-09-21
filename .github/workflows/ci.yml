@@ -21,4 +21,4 @@ jobs:
           npm start &
           sleep 3
           curl -sf "http://localhost:3000/health"
-          curl -sf "http://localhost:3000/explain?expression=30%209%20*%20*%201-5"
+          curl -sf -G "http://localhost:3000/explain" --data-urlencode "expression=30 9 * * 1-5"

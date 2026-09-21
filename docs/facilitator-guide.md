@@ -173,25 +173,29 @@ It reads the tree and answers. **Point out that there is no README** — it deri
 Give me a curl command that explains a job running at 9:30am on weekdays.
 ```
 
-Verify live:
+Verify live — note the cron expression stays readable, `--data-urlencode` handles the escaping:
 
 ```bash
-curl -s "http://localhost:3000/explain?expression=30%209%20*%20*%201-5"
+curl -s -G http://localhost:3000/explain --data-urlencode "expression=30 9 * * 1-5"
 ```
 ```json
 {"expression":"30 9 * * 1-5","description":"At 9:30 AM on weekdays","averageIntervalMinutes":2016,"nextRuns":["..."]}
 ```
+
+> **Why `-G --data-urlencode` and not `?expression=30%209%20*%20*%201-5`:** the percent-encoded form is unreadable on a projector, and the audience can't tell which cron expression you're demonstrating. This form shows the literal expression and works identically in bash, zsh, and PowerShell — including the `*` characters.
 
 ### Prompt 3 — hit defect B
 
 Reproduce the bug from issue #4 first, so the failure is real and on screen:
 
 ```bash
-curl -s "http://localhost:3000/explain?expression=0%2012%20*%20*%207"
+curl -s -G http://localhost:3000/explain --data-urlencode "expression=0 12 * * 7"
 ```
 ```json
 {"error":"dayOfWeek value 7 is out of range (0-6)","field":"dayOfWeek"}
 ```
+
+The room can read `0 12 * * 7` directly and see that it's ordinary weekly-on-Sunday cron. That's what makes the 400 land as obviously wrong.
 
 Then hand it to Copilot:
 
@@ -200,7 +204,14 @@ This returns HTTP 400, but 7 is valid cron for Sunday — examples/jobs.json
 uses it for the weekly usage report. Find the cause and fix it.
 ```
 
-**What good looks like:** it locates `resolveAtom` in `src/parser.js` and normalizes `7` to `0` for the day-of-week field. Restart the server and re-run the curl — the description should now read *"At 0:00 PM on Sunday"* (noon is still wrong; that's defect A, and it's a nice seam into the next surface).
+**What good looks like:** it locates `resolveAtom` in `src/parser.js` and normalizes `7` to `0` for the day-of-week field. Restart the server, then prove the fix by running both forms side by side:
+
+```bash
+curl -s -G http://localhost:3000/explain --data-urlencode "expression=0 12 * * 7"
+curl -s -G http://localhost:3000/explain --data-urlencode "expression=0 12 * * 0"
+```
+
+Both should now report the same schedule (`"At 0:00 PM on Sunday"` with identical `nextRuns`). Noon still renders as `0:00 PM` — that's defect A, and it's a natural seam into the next surface.
 
 > If Copilot patches the range check instead of normalizing the value, ask: *"Will `0 12 * * 7` and `0 12 * * 0` now produce identical next-run times? Show me."* That reliably steers it to the correct fix.
 
@@ -413,17 +424,25 @@ Exit code `0` means ready. Exit code `1` means it drifted — the output names e
 |---|---|---|
 | `curl` to `/health` returns nothing | Server still booting | Wait for the `listening on` line; cold start takes a few seconds |
 | `EADDRINUSE` on port 3000 | A server from a previous run | Stop it, or `PORT=3001 npm start` |
-| PowerShell POST returns a JSON parse error | `\"` escaping inside single quotes | Use `Invoke-RestMethod -Method Post -ContentType application/json -Body '{"expression":"0 3 1 * MON"}'`, or just use the GET form |
+| PowerShell POST returns a JSON parse error | `\"` escaping inside single quotes | Use `Invoke-RestMethod -Method Post -ContentType application/json -Body '{"expression":"0 3 1 * MON"}'`, or use the `-G --data-urlencode` GET form |
 | `npm test` hangs | Importing an entrypoint that calls `listen()` | Already handled — tests import `src/app.js`, never `src/server.js` |
 | Pre-flight fails on "working tree is clean" | Uncommitted changes from a previous run | `npm run demo:reset` |
 | Attendee sees no ghost text | Not signed in, or extension disabled | Check the Copilot status icon; have them pair up rather than debug live |
 
 ### Cross-platform command notes
 
-The GET form works identically everywhere and is the safest thing to put on screen:
+**Use this form on screen.** It keeps the cron expression literal and readable, and behaves identically in bash, zsh, and PowerShell — including the `*` characters, which do not glob inside double quotes:
 
 ```bash
-curl -s "http://localhost:3000/explain?expression=0%203%201%20*%20MON"
+curl -s -G http://localhost:3000/explain --data-urlencode "expression=0 3 1 * MON"
+```
+
+Avoid `?expression=0%203%201%20*%20MON`. It works, but nobody in the room can read it, and the whole point of the demo is that the audience recognizes the cron expression.
+
+Optional — if `jq` is installed, show just the human-readable line instead of the full JSON blob:
+
+```bash
+curl -s -G http://localhost:3000/explain --data-urlencode "expression=0 3 1 * MON" | jq -r '.description, .nextRuns[0]'
 ```
 
 POST on macOS/Linux:
