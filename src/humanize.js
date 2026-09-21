@@ -37,20 +37,22 @@ function formatClock(hour, minute) {
 }
 
 /**
- * Describe an evenly-spaced schedule in summary form.
+ * Summarize evenly-spaced minute values as a phrase like "Every 15 minutes".
  *
- * Cron step syntax produces evenly-spaced values: a minute field of `*` with a
- * step of 15 expands to 0, 15, 30, 45. Rather than listing every resulting time,
- * collapse it back into a phrase like "Every 15 minutes".
+ * Only called when the schedule already runs during every hour, so the minute
+ * values are the whole story. Cron step syntax produces evenly-spaced values:
+ * a minute field of `*` with a step of 15 expands to 0, 15, 30, 45.
  *
- * Returns null when the values are not evenly spaced, in which case the caller
- * falls back to listing each individual time.
+ * Measure the gap between consecutive values. When they are evenly spaced and
+ * wrap around the full hour, return "Every N minutes". When they are evenly
+ * spaced but cover only part of the hour, name the window instead, such as
+ * "Every 10 minutes from :00 to :30". Return null when the gaps are uneven, so
+ * the caller falls back to listing each individual time.
  *
- * @param {number[]} minutes sorted minute values the expression matches
- * @param {number[]} hours sorted hour values the expression matches
+ * @param {number[]} minutes sorted minute values, always at least two of them
  * @returns {string|null} a phrase such as "Every 15 minutes", or null
  */
-function describeStep(minutes, hours) {
+function describeMinuteStep(minutes) {
   return null;
 }
 
@@ -72,9 +74,11 @@ function describeTime(parsed) {
     return `Every hour at minute ${minutes[0]}`;
   }
 
-  const stepDescription = describeStep(minutes, hours);
-  if (stepDescription) {
-    return stepDescription;
+  if (everyHour) {
+    const stepDescription = describeMinuteStep(minutes);
+    if (stepDescription) {
+      return stepDescription;
+    }
   }
 
   const times = [];

@@ -4,7 +4,7 @@ title: "Enhancement: describe step syntax like */15 as every 15 minutes"
 labels: enhancement
 ---
 
-Step expressions are expanded into a count instead of being summarized. The `describeStep` helper in `src/humanize.js` is an unimplemented stub that always returns `null`, so every schedule falls through to the "list every time" path.
+Step expressions are expanded into a count instead of being summarized. The `describeMinuteStep` helper in `src/humanize.js` is an unimplemented stub that always returns `null`, so every schedule falls through to the "list every time" path.
 
 **Repro**
 
