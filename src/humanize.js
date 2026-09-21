@@ -32,7 +32,7 @@ function ordinal(n) {
 
 function formatClock(hour, minute) {
   const suffix = hour < 12 ? 'AM' : 'PM';
-  const displayHour = hour % 12;
+  const displayHour = hour % 12 || 12;
   return `${displayHour}:${String(minute).padStart(2, '0')} ${suffix}`;
 }
 

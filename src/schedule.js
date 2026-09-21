@@ -14,7 +14,16 @@ function matchesDate(parsed, date) {
   const dayOfMonth = date.getUTCDate();
   const dayOfWeek = date.getUTCDay();
 
-  return parsed.fields.dayOfMonth.has(dayOfMonth) && parsed.fields.dayOfWeek.has(dayOfWeek);
+  const domRestricted = parsed.restricted.dayOfMonth;
+  const dowRestricted = parsed.restricted.dayOfWeek;
+  const domMatch = parsed.fields.dayOfMonth.has(dayOfMonth);
+  const dowMatch = parsed.fields.dayOfWeek.has(dayOfWeek);
+
+  if (domRestricted && dowRestricted) {
+    return domMatch || dowMatch;
+  }
+
+  return domMatch && dowMatch;
 }
 
 /**

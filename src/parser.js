@@ -42,6 +42,9 @@ function resolveAtom(atom, field) {
     throw new CronParseError(`"${atom}" is not a valid ${field.key} value`, field.key);
   }
   const value = Number(atom);
+  if (field.key === 'dayOfWeek' && value === 7) {
+    return 0;
+  }
   if (value < field.min || value > field.max) {
     throw new CronParseError(
       `${field.key} value ${value} is out of range (${field.min}-${field.max})`,
