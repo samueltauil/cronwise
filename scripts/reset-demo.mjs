@@ -37,7 +37,11 @@ function git(argv, { allowFailure = false } = {}) {
 
 function gh(argv, { allowFailure = true } = {}) {
   try {
-    return execFileSync('gh', argv, { cwd: repoRoot, encoding: 'utf8' }).trim();
+    return execFileSync('gh', argv, {
+      cwd: repoRoot,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    }).trim();
   } catch (error) {
     if (allowFailure) return null;
     throw error;
