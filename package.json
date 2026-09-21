@@ -10,7 +10,10 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
-    "test": "node --test"
+    "test": "node --test",
+    "demo:verify": "node scripts/verify-demo.mjs",
+    "demo:reset": "node scripts/reset-demo.mjs",
+    "demo:reset:all": "node scripts/reset-demo.mjs --remote"
   },
   "dependencies": {
     "express": "^4.19.2"
