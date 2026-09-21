@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cronwise: Cron in 3 Slides</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/white.css"
+    />
+    <style>
+      .reveal pre {
+        box-shadow: none;
+      }
+
+      .reveal code {
+        color: #174ea6;
+      }
+
+      .reveal table {
+        margin: 1rem auto;
+        font-size: 0.8em;
+      }
+
+      .reveal th,
+      .reveal td {
+        padding: 0.35rem 0.7rem;
+        text-align: left;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides">
+        <section>
+          <h1>Cronwise</h1>
+          <p>Cron notation, explained plainly.</p>
+          <p class="fragment">This demo project exists to make scheduled jobs easier to read and verify.</p>
+        </section>
+
+        <section>
+          <h2>The five cron fields</h2>
+          <pre><code>minute hour day-of-month month day-of-week
+  0      9        *          *       1-5</code></pre>
+          <table>
+            <thead>
+              <tr>
+                <th>Field</th>
+                <th>Example</th>
+                <th>Meaning</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>minute</td><td><code>0</code></td><td>at minute zero</td></tr>
+              <tr><td>hour</td><td><code>9</code></td><td>at 9 AM</td></tr>
+              <tr><td>day/month</td><td><code>*</code></td><td>every day / every month</td></tr>
+              <tr><td>day/week</td><td><code>1-5</code></td><td>Monday through Friday</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section>
+          <h2>Simple examples</h2>
+          <pre><code>0 9 * * 1-5    # 9:00 AM on weekdays
+*/15 * * * *   # every 15 minutes
+30 2 1 * *     # 2:30 AM on the first of each month</code></pre>
+          <p>
+            Cronwise turns these compact expressions into plain language and
+            shows the next scheduled runs.
+          </p>
+        </section>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+    <script>
+      Reveal.initialize({
+        hash: true,
+        controls: true,
+        progress: true,
+        slideNumber: true,
+      });
+    </script>
+  </body>
+</html>
