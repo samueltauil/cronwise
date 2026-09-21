@@ -45,6 +45,7 @@ Six exercises, ramping in difficulty. Each maps to a GitHub issue.
 - `examples/jobs.json` — a realistic eight-job scheduler config, referenced by defects **B** and **F**.
 - `.github/workflows/ci.yml` — runs `npm test` plus a curl smoke test.
 - `workshop/issues/` — the source text for all six issues. This is what `npm run demo:issues` seeds from.
+- `docs/` — facilitator material: this guide and the cron primer deck. Reset never deletes anything here.
 
 ---
 
@@ -98,6 +99,7 @@ Repository is demo-ready. All planted defects are present.
 - Terminal font at 16pt+, VS Code at 16pt+.
 - Close every unrelated editor tab. Copilot reads open tabs; a stray file changes suggestions.
 - Browser logged into GitHub with the repo already open.
+- Open `docs/cronwise-intro.html` once to warm the CDN assets, or have a PDF export ready.
 - Run `npm run demo:issues:list` and keep the output handy — it maps each defect letter to the issue number *in your repo right now*.
 - Have a **completed coding-agent PR** open in a background tab as a fallback (see Surface 4).
 
@@ -108,7 +110,7 @@ Repository is demo-ready. All planted defects are present.
 | Time | Segment | Surface |
 |---|---|---|
 | 0:00–0:07 | Introduction | Slides |
-| 0:07–0:12 | Capability map | Slides |
+| 0:07–0:12 | Capability map + **cron primer** | Slides |
 | 0:12–0:20 | Understand an unfamiliar repo, fix a live 400 | **Copilot CLI** |
 | 0:20–0:30 | Completions, `/fix`, `/tests` | **VS Code** |
 | 0:30–0:38 | Build a new endpoint across files | **Copilot app** |
@@ -117,6 +119,21 @@ Repository is demo-ready. All planted defects are present.
 | 0:52–1:00 | Q&A and next steps | — |
 
 Four surfaces is the spine of this workshop. The point isn't "Copilot has many UIs" — it's that **one unit of work moves from terminal to editor to agent to browser**, and Copilot is present at each hop.
+
+### Cron primer deck
+
+`docs/cronwise-intro.html` is a three-slide reveal.js deck covering the five cron fields and a few examples. Run it right before the CLI segment so nobody is decoding `30 9 * * 1-5` while you're demonstrating Copilot.
+
+Open it directly in a browser — no build step:
+
+```bash
+open docs/cronwise-intro.html        # macOS
+start docs\cronwise-intro.html       # Windows
+```
+
+Its examples are chosen to set up the demos: `0 9 * * 1-5` previews the CLI segment, and `*/15 * * * *` is the exact expression behind defect **D**.
+
+> **It loads reveal.js from a CDN.** Open it once on the venue's network before you present. If the room's wifi is unreliable, take a PDF export as a backup — browser print-to-PDF works, or append `?print-pdf` to the URL for reveal.js's print layout.
 
 ---
 
@@ -595,6 +612,8 @@ Exit code `0` means ready. Exit code `1` means it drifted — the output names e
 | Ghost text appears nowhere in the completions demo | Cursor is somewhere the code is already complete | Put it inside the empty `describeMinuteStep` body; see Surface 2a. Fall back to inline chat `implement this` |
 | Completion returns "Every 1 hours" or another wrong unit | A stale checkout — the old stub also received an `hours` array | `git pull`; the helper now takes only `minutes` |
 | `0,7,30 * * * *` still says "72 times a day" after the fix | Nothing — that's the expected result | Uneven gaps must not be summarized; it's the guard-rail check, see Surface 2a |
+| A slide deck or doc vanished after a reset | It was committed after the `demo-start` tag | `git pull`, then `npm run demo:retag` so the tag includes it. Untracked files under `docs/` are always kept |
+| The cron primer deck renders unstyled | reveal.js CDN is blocked or offline | Use the PDF backup; see the run-of-show section |
 
 ### Cross-platform command notes
 
