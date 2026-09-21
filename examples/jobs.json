@@ -1,0 +1,14 @@
+{
+  "team": "platform-infra",
+  "note": "Everything here runs in UTC on the shared scheduler box.",
+  "jobs": [
+    { "name": "nightly-db-backup", "schedule": "0 3 * * *", "owner": "@dbre", "durationMinutes": 45 },
+    { "name": "search-index-rebuild", "schedule": "0 3 * * *", "owner": "@search", "durationMinutes": 70 },
+    { "name": "invoice-batch", "schedule": "0 3 1 * *", "owner": "@billing", "durationMinutes": 25 },
+    { "name": "stale-branch-reaper", "schedule": "30 9 * * 1-5", "owner": "@devex", "durationMinutes": 5 },
+    { "name": "cert-expiry-check", "schedule": "*/15 * * * *", "owner": "@secops", "durationMinutes": 1 },
+    { "name": "weekly-usage-report", "schedule": "0 12 * * 7", "owner": "@analytics", "durationMinutes": 12 },
+    { "name": "cache-warm", "schedule": "0 12 * * *", "owner": "@web", "durationMinutes": 8 },
+    { "name": "leap-day-audit", "schedule": "0 0 29 2 *", "owner": "@compliance", "durationMinutes": 3 }
+  ]
+}

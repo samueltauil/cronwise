@@ -1,0 +1,18 @@
+{
+  "name": "cronwise",
+  "version": "0.3.0",
+  "description": "Explain your cron jobs before they explain themselves at 3am.",
+  "type": "module",
+  "main": "src/server.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
