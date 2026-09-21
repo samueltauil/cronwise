@@ -139,6 +139,14 @@ function resetRemote() {
   if (prs.length === 0 && remoteBranches.length === 0 && closed.length === 0) {
     step('nothing to restore, GitHub state already pristine');
   }
+
+  // Recreate any workshop issue that was deleted outright, not just closed.
+  console.log('\nReconciling workshop issues');
+  try {
+    execSync('node scripts/seed-issues.mjs', { cwd: repoRoot, stdio: 'inherit' });
+  } catch {
+    console.error('Issue reconciliation reported a problem. Review the output above.');
+  }
 }
 
 async function main() {

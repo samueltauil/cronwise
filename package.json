@@ -12,6 +12,8 @@
     "dev": "node --watch src/server.js",
     "test": "node --test",
     "demo:verify": "node scripts/verify-demo.mjs",
+    "demo:issues": "node scripts/seed-issues.mjs",
+    "demo:issues:list": "node scripts/seed-issues.mjs --list",
     "demo:reset": "node scripts/reset-demo.mjs",
     "demo:reset:all": "node scripts/reset-demo.mjs --remote"
   },
