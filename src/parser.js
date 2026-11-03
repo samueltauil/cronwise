@@ -35,7 +35,7 @@ export class CronParseError extends Error {
 
 function resolveAtom(atom, field) {
   const lowered = atom.toLowerCase();
-  if (field.aliases && lowered in field.aliases) {
+  if (field.aliases && Object.hasOwn(field.aliases, lowered)) {
     return field.aliases[lowered];
   }
   if (!/^\d+$/.test(atom)) {
@@ -106,7 +106,7 @@ export function parseExpression(input) {
   }
 
   const source = input.trim();
-  const normalized = MACROS[source.toLowerCase()] ?? source;
+  const normalized = Object.hasOwn(MACROS, source.toLowerCase()) ? MACROS[source.toLowerCase()] : source;
   const tokens = normalized.split(/\s+/);
 
   if (tokens.length !== 5) {

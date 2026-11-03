@@ -1,6 +1,8 @@
 {
   "team": "platform-infra",
   "note": "Everything here runs in UTC on the shared scheduler box.",
+  "explainBatch": "curl -s http://localhost:3000/explain/batch -H 'Content-Type: application/json' --data-binary @examples/jobs.json",
+  "count": 5,
   "jobs": [
     { "name": "nightly-db-backup", "schedule": "0 3 * * *", "owner": "@dbre", "durationMinutes": 45 },
     { "name": "search-index-rebuild", "schedule": "0 3 * * *", "owner": "@search", "durationMinutes": 70 },
